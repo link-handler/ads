@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>انتقال امن — همیاران</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--muted:#94a3b8}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+    body{background:linear-gradient(180deg,#071028 0%,#071430 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:var(--card);padding:28px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,.6);max-width:760px;width:100%}
+    h1{margin:0 0 8px;font-size:20px}
+    p{margin:6px 0 14px;color:var(--muted)}
+    .btn{display:inline-block;padding:10px 16px;border-radius:10px;border:0;background:transparent;color:inherit;cursor:pointer;font-weight:600}
+    .primary{background:linear-gradient(90deg,#06b6d4,#7c3aed);color:#071021}
+    .secondary{background:transparent;border:1px solid rgba(255,255,255,.06)}
+    .muted{color:var(--muted);font-size:13px}
+    .danger{color:#ff7b7b}
+    .small{font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <h1>درحال انتقال به سایت همیاران...</h1>
+    <p class="muted">برای حفظ دسترسی پایدار شما به سایت، ابتدا به یک صفحهٔ انتقال میابید. اگر منتقل نشد، دکمه زیر را بزنید تا به صفحهٔ اصلی منتقل شوید.</p>
+
+    <div id="status" class="small muted">در حال بررسی ...</div>
+
+    <div style="margin-top:18px">
+      <button id="goBtn" class="btn primary">مشاهده پلن‌ها</button>
+      <button id="altBtn" class="btn secondary">بازگشت</button>
+    </div>
+
+    <p style="margin-top:18px" class="muted small">این فرایند برای امنیت دستگاه و ارتباط شما انجام می شود</p>
+
+    <hr style="margin:18px 0;border:none;border-top:1px solid rgba(255,255,255,.04)">
+
+    <div class="muted small">شماره پشتیبانی واتساپ و تلگرام<code>09924020084</code>پاسخگوی شما هستیم</div>
+  </div>
+
+  <script>
+    const TARGET_B64 = 'aHR0cHM6Ly9oYW15YXJhbi1nYXRlMi5zYnMvcGFuZWw=';
+    const AUTO_REDIRECT_MS = 3000;
+    const ADD_RANDOM_QUERY = true;
+
+    const statusEl = document.getElementById('status');
+    const goBtn = document.getElementById('goBtn');
+    const altBtn = document.getElementById('altBtn');
+
+    function isLikelyBot(){
+      try{
+        const ua = navigator.userAgent || '';
+        const navigatorProps = ['webdriver','plugins','languages'];
+        
+        if(navigator.webdriver) return {bot:true,reason:'navigator.webdriver'};
+        if(/HeadlessChrome|PhantomJS|curl|wget|bot|crawler|spider|Scan|Pingdom/i.test(ua)) return {bot:true,reason:'userAgent match'};
+        
+        if(!('plugins' in navigator) || (navigator.languages && navigator.languages.length===0)) return {bot:false,reason:'inconclusive'};
+        return {bot:false,reason:'looks like human'};
+      }catch(e){
+        return {bot:false,reason:'error'};
+      }
+    }
+
+    function buildTarget(){
+      let url = '';
+      try{ url = atob(TARGET_B64); }catch(e){ console.error('bad base64'); }
+      if(ADD_RANDOM_QUERY){
+        const u = new URL(url);
+        u.searchParams.set('_t', Math.random().toString(36).slice(2,9));
+        url = u.toString();
+      }
+      return url;
+    }
+
+    function doRedirect(){
+      const target = buildTarget();
+      statusEl.textContent = 'در حال انتقال...';
+      // replace برای ندادن history
+      window.location.replace(target);
+    }
+
+    const botCheck = isLikelyBot();
+    if(botCheck.bot){
+      statusEl.innerHTML = '<span class="danger">دسترسی مسدود شده (ربات تشخیص داده شد: '+botCheck.reason+')</span>';
+      goBtn.disabled = true;
+      altBtn.addEventListener('click', ()=>{ history.back(); });
+    } else {
+      statusEl.textContent = 'بررسی انجام شد: ' + botCheck.reason + '. بعد از چند ثانیه منتقل خواهید شد یا روی دکمه کلیک کنید.';
+      // auto redirect for humans (still allows click)
+      const autoTimer = setTimeout(doRedirect, AUTO_REDIRECT_MS);
+      // if user clicks, cancel timer and go immediately
+      goBtn.addEventListener('click', ()=>{ clearTimeout(autoTimer); doRedirect(); });
+      altBtn.addEventListener('click', ()=>{ clearTimeout(autoTimer); history.back(); });
+    }
+  </script>
+</body>
+</html>
